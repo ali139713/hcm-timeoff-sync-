@@ -1,14 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import type { HCMError } from "@/types";
-
-function isHCMConflict(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as HCMError).code !== "UNKNOWN"
-  );
-}
+import { isHCMConflict } from "@/lib/errors";
 
 export function makeQueryClient() {
   return new QueryClient({

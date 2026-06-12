@@ -4,8 +4,13 @@ import type { Balance, TimeOffRequest } from "@/types";
 
 // Baseline handlers — stories override these per scenario via parameters.msw.handlers
 export const baseHandlers = [
-  http.get("/api/hcm/balances", () => {
-    return HttpResponse.json({ balances: SEED_BALANCES });
+  http.get("/api/hcm/balances", ({ request }) => {
+    const url = new URL(request.url);
+    const employeeId = url.searchParams.get("employeeId");
+    const balances = employeeId
+      ? SEED_BALANCES.filter((b) => b.employeeId === employeeId)
+      : SEED_BALANCES;
+    return HttpResponse.json({ balances });
   }),
 
   http.get("/api/hcm/balance", ({ request }) => {

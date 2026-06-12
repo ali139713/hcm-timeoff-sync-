@@ -3,9 +3,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { submitRequest } from "@/lib/hcm/client";
 import { keys } from "@/lib/query-client";
+import { classifyHCMError } from "@/lib/errors";
 import { useUIStore } from "@/lib/store/ui";
 import { useFetchBalanceOnDemand } from "./useBalance";
-import type { Balance, HCMError, LeaveType, TimeOffRequest } from "@/types";
+import type { Balance, LeaveType, TimeOffRequest } from "@/types";
 
 interface SubmitPayload {
   id: string;
@@ -22,19 +23,7 @@ interface CacheSnapshot {
   balances: Balance[];
 }
 
-function classifyError(error: unknown): string {
-  if (typeof error !== "object" || error === null) {
-    return "Couldn't reach the HR system. Please try again.";
-  }
-  const hcmError = error as HCMError;
-  if (hcmError.code === "INSUFFICIENT_BALANCE") {
-    return "You don't have enough days available for this request.";
-  }
-  if (hcmError.code === "INVALID_DIMENSION") {
-    return "This location and leave type combination isn't valid for your account.";
-  }
-  return "Couldn't reach the HR system. Please try again.";
-}
+const classifyError = classifyHCMError;
 
 export function useTimeOffRequest() {
   const queryClient = useQueryClient();

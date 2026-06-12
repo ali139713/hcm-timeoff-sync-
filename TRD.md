@@ -48,7 +48,7 @@ The solution must resolve these tensions without confusing the user or misrepres
                 │  GET  /balances    │  ← batch corpus
                 │  POST /requests    │  ← submit
                 │  PATCH /requests   │  ← approve/deny
-                │  POST /_sim        │  ← chaos injection
+                │  POST /sim         │  ← chaos injection
                 └───────────────────┘
 ```
 
@@ -92,8 +92,7 @@ All cache keys live in a central registry (`src/lib/query-client.ts`). This is a
 ```typescript
 keys.balances('emp_1')                       // ['balances', 'emp_1']
 keys.balance('emp_1', 'loc_nyc', 'annual')   // ['balance', 'emp_1', 'loc_nyc', 'annual']
-keys.requests('emp_1')                       // ['requests', 'emp_1']
-keys.managerQueue('emp_3')                   // ['requests', 'manager', 'emp_3']
+keys.allRequests                             // ['requests', 'all']
 ```
 
 **Two-tier balance system:**
@@ -131,7 +130,7 @@ This is the race condition most implementations miss.
 
 **The fix:** `onMutate` calls `await queryClient.cancelQueries({ queryKey: keys.balances(employeeId) })` before applying the optimistic update. This cancels any in-flight fetches for that key. The background data arrives, is cancelled, and the optimistic state is applied cleanly. After `onSettled`, a fresh refetch occurs with the correct post-mutation data.
 
-The `useReconcile` hook also guards this: it checks `useIsMutating()` before surfacing any stale banner. If a mutation is in-flight, reconciliation is deferred until the mutation settles.
+The stale-cell detection in `BalanceGrid` also guards this: it checks `useIsMutating()` before comparing fresh data against the previous snapshot. If a mutation is in-flight, the comparison is skipped entirely, so an optimistic deduction is never misreported as an external balance change.
 
 ---
 
@@ -158,7 +157,7 @@ The component tree is designed so data-fetching concerns do not leak into presen
 
 ```
 Providers (QueryClientProvider, Toaster)
-└── BalanceGrid                          ← owns useBalances, useReconcile
+└── BalanceGrid                          ← owns useBalances + stale-cell detection
     ├── BalanceRow × N
     │   └── BalanceCell                  ← receives Balance prop, no fetch
     └── StaleBanner (conditional)        ← reads from Zustand dismiss state
@@ -171,16 +170,16 @@ ApprovalQueue                            ← owns useRequests
 **Rules:**
 - Components below `BalanceGrid` and `ApprovalCard` receive data as props. They do not fetch, do not import Prisma, do not call APIs.
 - Every component that reads balance data is wrapped in an `ErrorBoundary`. A bad HCM response for one employee's balance must not crash the entire manager view.
-- `BalanceGrid` is the only component that calls `useReconcile`. Reconciliation is a session-level concern, not a per-row concern. One hook, one stale banner — not six.
+- `BalanceGrid` is the only component that detects external balance changes. Reconciliation is a grid-level concern, not a per-row concern — one comparison pass over the fetched corpus, one banner per changed cell, rather than six subscriptions.
 
 ---
 
 ## 4. Mock HCM Design
 
-The mock HCM is built as Next.js route handlers with injectable chaos via a `?mode=` query parameter and a `POST /_sim/trigger` endpoint. This was a deliberate choice over MSW-only mocking.
+The mock HCM is built as Next.js route handlers with injectable chaos via a `?mode=` query parameter and a `POST /api/hcm/sim` endpoint. This was a deliberate choice over MSW-only mocking.
 
 **Why server-side mock routes?**
-MSW handlers are process-local and reset between test runs. The `_sim` endpoint persists state in memory across requests within a dev server session, which means Storybook stories can call `/_sim/trigger` in their `play()` functions to set up complex scenarios (anniversary bonus mid-session, slow HCM, silent failures) without per-story handler overrides.
+MSW handlers are process-local and reset between test runs. The `sim` endpoint persists state in memory across requests within a dev server session, which means manual testing and demos can exercise complex scenarios (anniversary bonus mid-session, slow HCM, silent failures) against a single running server. Storybook stories use MSW handler overrides instead, since they run isolated from the dev server.
 
 The mock is gated behind `NODE_ENV !== 'production'` — the chaos injection endpoint returns 403 in production.
 
@@ -254,7 +253,7 @@ These tests exercise the hook boundaries working together, not individual functi
 ### What is not unit tested
 Mock HCM route handlers are not unit tested in isolation — their logic is covered by the integration tests that call them via MSW. Testing the handlers separately would duplicate coverage without guarding additional regressions.
 
-The `useReconcile` hook is not unit tested — its behaviour is inherently observable only in a rendered component over time. It is covered by the Storybook interaction tests (the `BalanceRefreshedMidSession` story exercises the reconciliation path end-to-end).
+The stale-cell detection effect in `BalanceGrid` is not unit tested in isolation — its behaviour is inherently observable only in a rendered component across successive fetches. It is covered by the Storybook interaction tests (the `BalanceRefreshedMidSession` story exercises the path end-to-end).
 
 ### Storybook as a test layer
 Storybook with MSW is the proof of state coverage. Every meaningful UI state has a named story. The `play()` functions are interaction tests: they fire user events and assert on DOM state. They run in a real browser (Chromium via Playwright) and are deployed to Chromatic for visual regression detection on each push.
@@ -270,7 +269,7 @@ The HCM API as described is a REST API (read/write per cell, batch read). A WebS
 
 This was not implemented because: (a) the assignment spec does not describe a push API from HCM, (b) adding a persistent connection adds infrastructure complexity (connection management, reconnect logic, auth) disproportionate to the stated problem, and (c) `refetchOnWindowFocus` combined with targeted post-mutation reconciliation achieves the correctness guarantee without persistent connections for the described use case.
 
-If the HCM exposed an event stream, the `useReconcile` hook would be replaced with an SSE subscription that calls `queryClient.setQueryData` on incoming events — the rest of the architecture remains unchanged.
+If the HCM exposed an event stream, the focus-driven refetch would be replaced with an SSE subscription that calls `queryClient.setQueryData` on incoming events — the stale-cell detection in `BalanceGrid` and the rest of the architecture remain unchanged.
 
 ### Polling on a fixed interval
 A naive 60s poll on the batch endpoint was considered and rejected. It creates a constant load on an "expensive" endpoint (as described in the spec) regardless of whether the user is active or whether any data has changed. The `refetchOnWindowFocus` approach is cheaper: it only fires when there is a reason to believe the data might be stale (the user was away).
@@ -303,4 +302,4 @@ Rejected because: (a) balance data is user-session-specific and cannot be cached
 
 - The mock HCM state is in-memory and resets on server restart. For a production system, HCM would be a real external API; the `client.ts` fetch wrapper, cache keys, and hook interfaces remain unchanged.
 - Storybook is deployed to Chromatic for visual regression detection on each push.
-- The `/_sim` endpoint must be removed or permanently gated before any production deployment.
+- The `/api/hcm/sim` endpoint must be removed or permanently gated before any production deployment.

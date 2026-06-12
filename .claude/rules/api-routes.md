@@ -9,4 +9,4 @@
 - `conflict` mode: return 409 with `{ code: 'INSUFFICIENT_BALANCE' | 'INVALID_DIMENSION' }`
 - `slow` mode: delay 4000ms — tests that pending state is visible and not a flicker
 - `anniversary` mode: increment balance by 5, return 200 — tests mid-session reconciliation
-- The `_sim/trigger` endpoint allows Storybook play() functions to set chaos mode programmatically
+- The `sim` endpoint allows Storybook play() functions to set chaos mode programmatically

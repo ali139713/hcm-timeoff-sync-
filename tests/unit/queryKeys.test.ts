@@ -31,11 +31,12 @@ describe("cache keys", () => {
     });
   });
 
-  describe("keys.managerQueue", () => {
-    it("is distinct from employee request keys", () => {
-      const mgr = keys.managerQueue("emp_3");
-      const emp = keys.requests("emp_3");
-      expect(mgr).not.toEqual(emp);
+  describe("keys.allRequests", () => {
+    it("does not collide with balance keys", () => {
+      expect(keys.allRequests[0]).not.toEqual(keys.balances("emp_1")[0]);
+      expect(keys.allRequests[0]).not.toEqual(
+        keys.balance("emp_1", "loc_nyc", "annual")[0]
+      );
     });
   });
 });

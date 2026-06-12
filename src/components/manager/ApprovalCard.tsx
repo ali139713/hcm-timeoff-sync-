@@ -13,7 +13,6 @@ import type { TimeOffRequest } from "@/types";
 
 interface Props {
   request: TimeOffRequest;
-  managerId: string;
 }
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -23,7 +22,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: "default" | "second
   rolled_back: { label: "Rolled back", variant: "outline" },
 };
 
-export function ApprovalCard({ request, managerId }: Props) {
+export function ApprovalCard({ request }: Props) {
   // Fetch the live balance at decision time so the manager sees the true
   // remaining balance, not a potentially stale cached value
   const [showLiveBalance, setShowLiveBalance] = useState(false);
@@ -33,7 +32,7 @@ export function ApprovalCard({ request, managerId }: Props) {
     request.leaveType,
     { enabled: showLiveBalance }
   );
-  const { resolve, isPending } = useResolveRequest(managerId);
+  const { resolve, isPending } = useResolveRequest();
 
   const employee = EMPLOYEES.find((e) => e.id === request.employeeId);
   const location = LOCATIONS.find((l) => l.id === request.locationId);

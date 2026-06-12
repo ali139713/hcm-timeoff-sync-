@@ -17,7 +17,7 @@ Triggers a specific chaos scenario on the mock HCM server.
 
 ## Example
 ```bash
-curl -X POST http://localhost:3000/api/hcm/_sim/trigger \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "anniversary", "employeeId": "emp_1"}'
 ```

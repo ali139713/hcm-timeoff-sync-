@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
+  getSimMode,
   resetSim,
   setSimMode,
   triggerAnniversaryBonus,
@@ -53,6 +54,5 @@ export async function GET() {
     return NextResponse.json({ error: "not available" }, { status: 403 });
   }
 
-  const { getSimMode } = await import("@/lib/hcm/sim");
   return NextResponse.json(getSimMode());
 }

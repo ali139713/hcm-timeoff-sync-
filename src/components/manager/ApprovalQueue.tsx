@@ -5,11 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useRequests } from "@/hooks/useRequests";
 
-interface Props {
-  managerId: string;
-}
-
-function ApprovalQueueInner({ managerId }: Props) {
+function ApprovalQueueInner() {
   const { requests, isLoading, isError } = useRequests();
 
   if (isLoading) {
@@ -52,7 +48,7 @@ function ApprovalQueueInner({ managerId }: Props) {
           </h3>
           <div className="space-y-3">
             {pending.map((req) => (
-              <ApprovalCard key={req.id} request={req} managerId={managerId} />
+              <ApprovalCard key={req.id} request={req} />
             ))}
           </div>
         </section>
@@ -65,7 +61,7 @@ function ApprovalQueueInner({ managerId }: Props) {
           </h3>
           <div className="space-y-3">
             {resolved.map((req) => (
-              <ApprovalCard key={req.id} request={req} managerId={managerId} />
+              <ApprovalCard key={req.id} request={req} />
             ))}
           </div>
         </section>
@@ -74,10 +70,10 @@ function ApprovalQueueInner({ managerId }: Props) {
   );
 }
 
-export function ApprovalQueue({ managerId }: Props) {
+export function ApprovalQueue() {
   return (
     <ErrorBoundary>
-      <ApprovalQueueInner managerId={managerId} />
+      <ApprovalQueueInner />
     </ErrorBoundary>
   );
 }

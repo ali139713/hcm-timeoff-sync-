@@ -22,7 +22,6 @@ const meta: Meta<typeof ApprovalCard> = {
   component: ApprovalCard,
   args: {
     request: PENDING_REQUEST,
-    managerId: "emp_3",
   },
   parameters: {
     msw: { handlers: baseHandlers },

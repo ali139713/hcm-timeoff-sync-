@@ -53,6 +53,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const newRequest = {
+    ...parsed.data,
+    status: "pending_hcm" as const,
+    submittedAt: new Date().toISOString(),
+  };
+
+  if (mode === "silent_fail") {
+    // 200 but nothing recorded and no deduction — the frontend's onSettled
+    // per-cell read will see the unchanged balance and reconcile
+    return NextResponse.json({ request: newRequest });
+  }
+
   const { employeeId, locationId, leaveType, days } = parsed.data;
   const deducted = deductBalance(employeeId, locationId, leaveType, days);
 
@@ -61,17 +73,6 @@ export async function POST(req: NextRequest) {
       { error: "insufficient balance", code: "INSUFFICIENT_BALANCE" },
       { status: 409 }
     );
-  }
-
-  const newRequest = {
-    ...parsed.data,
-    status: "pending_hcm" as const,
-    submittedAt: new Date().toISOString(),
-  };
-
-  if (mode === "silent_fail") {
-    // Accept the request but don't actually deduct — frontend detects on reconcile
-    return NextResponse.json({ request: newRequest });
   }
 
   addRequest(newRequest);

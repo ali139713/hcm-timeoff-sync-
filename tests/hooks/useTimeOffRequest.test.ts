@@ -8,7 +8,6 @@ import { keys } from "@/lib/query-client";
 import { SEED_BALANCES } from "@/lib/hcm/fixtures";
 
 const PAYLOAD = {
-  id: "req_test_1",
   employeeId: "emp_1",
   locationId: "loc_nyc",
   leaveType: "annual" as const,

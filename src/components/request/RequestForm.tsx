@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -57,7 +57,7 @@ export function RequestForm({ employeeId }: Props) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { errors },
@@ -84,8 +84,8 @@ export function RequestForm({ employeeId }: Props) {
     }
   }, [savedDraft, submissionStep, reset]);
 
-  const watchedLocation = watch("locationId") ?? "";
-  const watchedLeaveType = watch("leaveType");
+  const watchedLocation = useWatch({ control, name: "locationId" }) ?? "";
+  const watchedLeaveType = useWatch({ control, name: "leaveType" });
 
   const relevantBalance = balances.find(
     (b) =>
@@ -94,7 +94,6 @@ export function RequestForm({ employeeId }: Props) {
 
   function onSubmit(values: FormValues) {
     submit({
-      id: `req_${Date.now()}`,
       employeeId,
       locationId: values.locationId,
       leaveType: values.leaveType,

@@ -6,7 +6,6 @@ import { baseHandlers, scenarios } from "@/mocks/handlers";
 const meta: Meta<typeof ApprovalQueue> = {
   title: "Manager/ApprovalQueue",
   component: ApprovalQueue,
-  args: { managerId: "emp_3" },
   parameters: {
     msw: { handlers: baseHandlers },
   },

@@ -16,7 +16,7 @@ src/
         balance/        # GET /api/hcm/balance?employeeId=&locationId=  (real-time per-cell)
         balances/       # GET /api/hcm/balances?employeeId=             (batch corpus)
         requests/       # POST/PATCH /api/hcm/requests                  (submit + approve/deny)
-        _sim/           # POST /api/hcm/_sim/trigger                    (chaos controls)
+        sim/            # POST /api/hcm/sim                    (chaos controls)
   components/
     balance/            # BalanceGrid, BalanceRow, BalanceCell, StaleBanner
     request/            # RequestForm, RequestStatus, RollbackNotice
@@ -26,7 +26,7 @@ src/
     useBalance.ts       # TanStack Query wrapper — per-cell real-time read
     useBalances.ts      # TanStack Query wrapper — batch hydration
     useTimeOffRequest.ts # Mutation with optimistic update + rollback
-    useReconcile.ts     # Detects background balance changes, surfaces StaleBanner
+    useRequests.ts      # Request list + approve/deny mutation
   lib/
     hcm/
       client.ts         # Typed fetch wrapper for all HCM endpoints
@@ -40,7 +40,7 @@ src/
 ## Data Flow
 
 ```
-HCM Batch Endpoint ──► useBalances (initial hydration, staleTime 5min)
+HCM Batch Endpoint ──► useBalances (initial hydration, staleTime 30s)
                               │
                               ▼
                        BalanceGrid (renders per-location rows)
@@ -76,7 +76,7 @@ We never show "approved" until HCM confirms. The optimistic deduction is shown a
 - Background reconciliation: if balance changes while a mutation is in-flight, queue the update and apply after mutation settles
 
 ### Mock HCM chaos controls
-All interesting failure modes are injectable via `?mode=` query param or the `_sim/trigger` endpoint:
+All interesting failure modes are injectable via `?mode=` query param or the `sim` endpoint:
 - `silent_fail` — 200 response but balance unchanged
 - `conflict` — explicit conflict error
 - `slow` — 4s delay to test pending state

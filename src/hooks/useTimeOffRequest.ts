@@ -9,7 +9,6 @@ import { useFetchBalanceOnDemand } from "./useBalance";
 import type { Balance, LeaveType, TimeOffRequest } from "@/types";
 
 interface SubmitPayload {
-  id: string;
   employeeId: string;
   locationId: string;
   leaveType: LeaveType;

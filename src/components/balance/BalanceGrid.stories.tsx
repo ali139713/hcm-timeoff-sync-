@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { userEvent, within, expect } from "@storybook/test";
+import { within, expect } from "@storybook/test";
 import { http, HttpResponse } from "msw";
 import { BalanceGrid } from "./BalanceGrid";
 import { baseHandlers, scenarios } from "@/mocks/handlers";
@@ -26,7 +26,6 @@ export const Loading: Story = {
     msw: { handlers: scenarios.loading },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
     // Skeletons should be visible while fetch is pending
     const skeletons = canvasElement.querySelectorAll(".animate-pulse");
     await expect(skeletons.length).toBeGreaterThan(0);

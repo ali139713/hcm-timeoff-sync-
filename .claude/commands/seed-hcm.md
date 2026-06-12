@@ -3,7 +3,9 @@
 Resets the in-memory mock HCM state to the baseline fixture.
 
 ```bash
-curl -X POST http://localhost:3000/api/hcm/_sim/reset
+curl -X POST http://localhost:3000/api/hcm/sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "reset"}'
 ```
 
 This sets balances back to the fixture defined in `src/lib/hcm/fixtures.ts`:

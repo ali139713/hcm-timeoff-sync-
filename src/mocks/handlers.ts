@@ -61,7 +61,7 @@ export const baseHandlers = [
     return HttpResponse.json({ ok: true });
   }),
 
-  http.post("/api/hcm/_sim", () => {
+  http.post("/api/hcm/sim", () => {
     return HttpResponse.json({ ok: true });
   }),
 ];

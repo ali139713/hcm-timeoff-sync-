@@ -26,7 +26,5 @@ export const keys = {
   balances: (employeeId: string) => ["balances", employeeId] as const,
   balance: (employeeId: string, locationId: string, leaveType: string) =>
     ["balance", employeeId, locationId, leaveType] as const,
-  requests: (employeeId: string) => ["requests", employeeId] as const,
-  managerQueue: (managerId: string) =>
-    ["requests", "manager", managerId] as const,
+  allRequests: ["requests", "all"] as const,
 };

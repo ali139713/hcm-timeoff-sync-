@@ -7,7 +7,7 @@ import type { TimeOffRequest } from "@/types";
 
 export function useRequests() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["requests", "all"],
+    queryKey: keys.allRequests,
     queryFn: fetchRequests,
     staleTime: 15_000,
   });
@@ -19,7 +19,7 @@ export function useRequests() {
   };
 }
 
-export function useResolveRequest(managerId: string) {
+export function useResolveRequest() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -32,14 +32,14 @@ export function useResolveRequest(managerId: string) {
     }) => resolveRequest(requestId, action),
 
     onMutate: async ({ requestId, action }) => {
-      await queryClient.cancelQueries({ queryKey: ["requests", "all"] });
+      await queryClient.cancelQueries({ queryKey: keys.allRequests });
 
       const snapshot = queryClient.getQueryData<{ requests: TimeOffRequest[] }>(
-        ["requests", "all"]
+        keys.allRequests
       );
 
       queryClient.setQueryData<{ requests: TimeOffRequest[] }>(
-        ["requests", "all"],
+        keys.allRequests,
         (old) => {
           if (!old) return old;
           return {
@@ -61,15 +61,12 @@ export function useResolveRequest(managerId: string) {
 
     onError: (_err, _vars, context) => {
       if (context?.snapshot) {
-        queryClient.setQueryData(["requests", "all"], context.snapshot);
+        queryClient.setQueryData(keys.allRequests, context.snapshot);
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests", "all"] });
-      queryClient.invalidateQueries({
-        queryKey: keys.managerQueue(managerId),
-      });
+      queryClient.invalidateQueries({ queryKey: keys.allRequests });
     },
   });
 

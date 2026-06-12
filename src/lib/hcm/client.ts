@@ -46,11 +46,11 @@ export async function fetchBalances(
 }
 
 export async function submitRequest(
-  payload: Omit<TimeOffRequest, "status" | "submittedAt" | "resolvedAt">
+  payload: Omit<TimeOffRequest, "id" | "status" | "submittedAt" | "resolvedAt">
 ): Promise<{ request: TimeOffRequest }> {
   return hcmFetch<{ request: TimeOffRequest }>("/requests", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, id: `req_${Date.now()}` }),
   });
 }
 
@@ -74,7 +74,7 @@ export async function triggerSim(payload: {
   mode: SimMode | "reset";
   employeeId?: string;
 }): Promise<{ ok: boolean; mode: string }> {
-  return hcmFetch<{ ok: boolean; mode: string }>("/_sim", {
+  return hcmFetch<{ ok: boolean; mode: string }>("/sim", {
     method: "POST",
     body: JSON.stringify(payload),
   });

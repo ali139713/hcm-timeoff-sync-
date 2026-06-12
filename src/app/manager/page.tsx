@@ -27,7 +27,7 @@ export default async function ManagerPage({ searchParams }: Props) {
       </div>
 
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        <ApprovalQueue managerId={managerId} />
+        <ApprovalQueue />
       </Suspense>
     </div>
   );

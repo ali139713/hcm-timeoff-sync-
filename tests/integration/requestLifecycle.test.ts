@@ -24,7 +24,6 @@ const PENDING_REQUEST: TimeOffRequest = {
 };
 
 const SUBMIT_PAYLOAD = {
-  id: PENDING_REQUEST.id,
   employeeId: PENDING_REQUEST.employeeId,
   locationId: PENDING_REQUEST.locationId,
   leaveType: PENDING_REQUEST.leaveType,
@@ -102,9 +101,9 @@ describe("request lifecycle — HCM conflict", () => {
 describe("request lifecycle — manager approval", () => {
   it("approve → request status updated optimistically", async () => {
     const client = makeTestQueryClient();
-    client.setQueryData(["requests", "all"], { requests: [PENDING_REQUEST] });
+    client.setQueryData(keys.allRequests, { requests: [PENDING_REQUEST] });
 
-    const { result } = renderHook(() => useResolveRequest("emp_3"), {
+    const { result } = renderHook(() => useResolveRequest(), {
       wrapper: createWrapper(client),
     });
 
@@ -113,7 +112,7 @@ describe("request lifecycle — manager approval", () => {
     });
 
     await waitFor(() => {
-      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(["requests", "all"]);
+      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(keys.allRequests);
       const updated = cached?.requests.find((r) => r.id === PENDING_REQUEST.id);
       expect(updated?.status).toBe("approved");
     });
@@ -121,9 +120,9 @@ describe("request lifecycle — manager approval", () => {
 
   it("deny → request status updated optimistically", async () => {
     const client = makeTestQueryClient();
-    client.setQueryData(["requests", "all"], { requests: [PENDING_REQUEST] });
+    client.setQueryData(keys.allRequests, { requests: [PENDING_REQUEST] });
 
-    const { result } = renderHook(() => useResolveRequest("emp_3"), {
+    const { result } = renderHook(() => useResolveRequest(), {
       wrapper: createWrapper(client),
     });
 
@@ -132,7 +131,7 @@ describe("request lifecycle — manager approval", () => {
     });
 
     await waitFor(() => {
-      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(["requests", "all"]);
+      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(keys.allRequests);
       const updated = cached?.requests.find((r) => r.id === PENDING_REQUEST.id);
       expect(updated?.status).toBe("denied");
     });
@@ -146,9 +145,9 @@ describe("request lifecycle — manager approval", () => {
     );
 
     const client = makeTestQueryClient();
-    client.setQueryData(["requests", "all"], { requests: [PENDING_REQUEST] });
+    client.setQueryData(keys.allRequests, { requests: [PENDING_REQUEST] });
 
-    const { result } = renderHook(() => useResolveRequest("emp_3"), {
+    const { result } = renderHook(() => useResolveRequest(), {
       wrapper: createWrapper(client),
     });
 
@@ -160,7 +159,7 @@ describe("request lifecycle — manager approval", () => {
 
     // After rollback, the original snapshot is restored
     await waitFor(() => {
-      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(["requests", "all"]);
+      const cached = client.getQueryData<{ requests: TimeOffRequest[] }>(keys.allRequests);
       const reverted = cached?.requests.find((r) => r.id === PENDING_REQUEST.id);
       expect(reverted?.status).toBe("pending_hcm");
     });

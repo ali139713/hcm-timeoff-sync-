@@ -51,27 +51,27 @@ The mock HCM has injectable failure modes for manual testing. While the dev serv
 
 ```bash
 # Slow HCM — see the pending state for 4 seconds
-curl -X POST http://localhost:3000/api/hcm/_sim \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "slow"}'
 
 # HCM conflict — next request submission returns 409, triggers rollback
-curl -X POST http://localhost:3000/api/hcm/_sim \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "conflict"}'
 
 # Silent failure — 200 response but balance unchanged, caught on reconciliation
-curl -X POST http://localhost:3000/api/hcm/_sim \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "silent_fail"}'
 
 # Anniversary bonus — adds 5 days to annual leave mid-session, triggers StaleBanner
-curl -X POST http://localhost:3000/api/hcm/_sim \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "anniversary", "employeeId": "emp_1"}'
 
 # Reset HCM state to baseline
-curl -X POST http://localhost:3000/api/hcm/_sim \
+curl -X POST http://localhost:3000/api/hcm/sim \
   -H "Content-Type: application/json" \
   -d '{"mode": "reset"}'
 ```
@@ -89,7 +89,7 @@ src/
     request/          # RequestForm, RollbackNotice
     manager/          # ApprovalQueue, ApprovalCard
     ui/               # shadcn primitives (owned source)
-  hooks/              # useBalances, useBalance, useTimeOffRequest, useRequests, useReconcile
+  hooks/              # useBalances, useBalance, useTimeOffRequest, useRequests
   lib/
     hcm/              # Mock HCM client, fixtures, in-memory sim state
     store/            # Zustand UI store (form step machine, banner state)

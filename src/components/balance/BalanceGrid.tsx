@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { BalanceCell } from "./BalanceCell";
 import { StaleBanner } from "./StaleBanner";
 import { useBalances } from "@/hooks/useBalances";
-import { useReconcile } from "@/hooks/useReconcile";
 import { useUIStore } from "@/lib/store/ui";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { Balance } from "@/types";
@@ -24,6 +23,12 @@ const LEAVE_LABELS: Record<string, string> = {
   personal: "Personal Leave",
 };
 
+interface StaleCell {
+  key: string;
+  fresh: Balance;
+  previousAvailable: number;
+}
+
 function groupByLocation(balances: Balance[]) {
   return balances.reduce<Record<string, Balance[]>>((acc, b) => {
     if (!acc[b.locationId]) acc[b.locationId] = [];
@@ -35,10 +40,43 @@ function groupByLocation(balances: Balance[]) {
 function BalanceGridInner({ employeeId }: Props) {
   const { balances, isLoading, isError, isStale } = useBalances(employeeId);
   const isMutating = useIsMutating();
-  const { submissionStep } = useUIStore();
-  const previousBalancesRef = useRef<Balance[]>([]);
+  const { submissionStep, dismissStaleBanner } = useUIStore();
 
-  useReconcile(employeeId);
+  // Detect balances changed by something other than this session's mutations
+  // (anniversary bonus, year reset, manager adjustment). `acknowledged` is the
+  // last snapshot the user has seen; comparing it against fresh data during
+  // render is the React "adjust state when props change" pattern. While a
+  // mutation is in-flight the baseline is reset, so the user's own optimistic
+  // deduction is adopted as the new baseline instead of flagged as external.
+  const [acknowledged, setAcknowledged] = useState<Balance[] | null>(null);
+
+  if (isMutating > 0) {
+    if (acknowledged !== null) setAcknowledged(null);
+  } else if (balances.length > 0 && acknowledged === null) {
+    setAcknowledged(balances);
+  }
+
+  const staleCells: StaleCell[] = [];
+  if (acknowledged !== null && isMutating === 0) {
+    for (const fresh of balances) {
+      const prev = acknowledged.find(
+        (b) =>
+          b.locationId === fresh.locationId && b.leaveType === fresh.leaveType
+      );
+      if (prev && prev.available !== fresh.available) {
+        staleCells.push({
+          key: `${employeeId}:${fresh.locationId}:${fresh.leaveType}`,
+          fresh,
+          previousAvailable: prev.available,
+        });
+      }
+    }
+  }
+
+  function acceptStaleCell(key: string) {
+    dismissStaleBanner(key);
+    setAcknowledged(balances);
+  }
 
   if (isLoading) {
     return (
@@ -77,31 +115,6 @@ function BalanceGridInner({ employeeId }: Props) {
 
   const grouped = groupByLocation(balances);
 
-  // Detect external balance changes for stale banners
-  const staleCells: Array<{
-    key: string;
-    fresh: Balance;
-    previous: Balance;
-  }> = [];
-
-  if (!isMutating && previousBalancesRef.current.length > 0) {
-    for (const fresh of balances) {
-      const prev = previousBalancesRef.current.find(
-        (b) =>
-          b.locationId === fresh.locationId && b.leaveType === fresh.leaveType
-      );
-      if (prev && prev.available !== fresh.available) {
-        staleCells.push({
-          key: `${employeeId}:${fresh.locationId}:${fresh.leaveType}`,
-          fresh,
-          previous: prev,
-        });
-      }
-    }
-  }
-
-  previousBalancesRef.current = balances;
-
   return (
     <div className="space-y-4">
       {isStale && !isMutating && (
@@ -110,14 +123,14 @@ function BalanceGridInner({ employeeId }: Props) {
         </p>
       )}
 
-      {staleCells.map(({ key, fresh, previous }) => (
+      {staleCells.map(({ key, fresh, previousAvailable }) => (
         <StaleBanner
           key={key}
           bannerKey={key}
           leaveType={fresh.leaveType}
-          previousValue={previous.available}
+          previousValue={previousAvailable}
           freshValue={fresh.available}
-          onAccept={() => {}}
+          onAccept={() => acceptStaleCell(key)}
         />
       ))}
 
@@ -147,8 +160,7 @@ function BalanceGridInner({ employeeId }: Props) {
                     <BalanceCell
                       balance={balance}
                       isOptimisticPending={
-                        submissionStep === "pending_hcm" &&
-                        balance.pending > 0
+                        submissionStep === "pending_hcm" && balance.pending > 0
                       }
                     />
                   </div>

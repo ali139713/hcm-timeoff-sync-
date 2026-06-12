@@ -1,7 +1,7 @@
 import type { Balance, SimMode, TimeOffRequest } from "@/types";
 import { SEED_BALANCES, SEED_REQUESTS } from "./fixtures";
 
-// In-memory HCM state — reset via POST /api/hcm/_sim/reset
+// In-memory HCM state — reset via POST /api/hcm/sim with {"mode": "reset"}
 let balances: Balance[] = structuredClone(SEED_BALANCES);
 let requests: TimeOffRequest[] = structuredClone(SEED_REQUESTS);
 let currentMode: SimMode = "normal";
@@ -89,16 +89,6 @@ export function triggerAnniversaryBonus(employeeId: string) {
 
 export function addRequest(req: TimeOffRequest) {
   requests.push(req);
-}
-
-export function getRequestsForManager(managerId: string): TimeOffRequest[] {
-  return requests.filter((r) => {
-    const { EMPLOYEES } = require("./fixtures");
-    const emp = EMPLOYEES.find(
-      (e: { id: string; managerId?: string }) => e.id === r.employeeId
-    );
-    return emp?.managerId === managerId;
-  });
 }
 
 export function getAllRequests(): TimeOffRequest[] {

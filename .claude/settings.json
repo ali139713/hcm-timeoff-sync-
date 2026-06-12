@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "command": "echo '🏥 HCM Time-Off Sync — session started' && node -v && echo 'Node should be 20.x — run: nvm use 20.19.4 if not' && test -n \"$NODE_ENV\" && echo \"NODE_ENV=$NODE_ENV\" || echo '⚠️  NODE_ENV not set'"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "cd /Users/aliazhar/Repos/hcm-timeoff-sync && npm run lint:fix --silent 2>/dev/null || true"
+      }
+    ],
+    "Stop": [
+      {
+        "command": "echo '⚠️  Before committing: run npm run typecheck && npm test'"
+      }
+    ]
+  }
+}

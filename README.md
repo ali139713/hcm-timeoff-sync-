@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HCM Time-Off Sync
 
-## Getting Started
+Time-off request frontend for ExampleHR — optimistic updates, balance reconciliation, and graceful degradation when the source of truth lives in an external HCM system.
 
-First, run the development server:
+## Requirements
+
+- Node 20.x (`nvm use 20.19.4`)
+- npm
+
+## Setup
+
+```bash
+npm install
+```
+
+No environment variables are required — all HCM endpoints are mocked locally.
+
+## Running the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The landing page has links for two employee views (Sarah Chen, James Okafor) and one manager view (Maria Santos). Switch between them to exercise the full request and approval flow.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running tests
 
-## Learn More
+```bash
+# Unit + hook + integration tests (27 tests)
+npx vitest run --project unit
 
-To learn more about Next.js, take a look at the following resources:
+# All tests including Storybook interaction tests
+npm test
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Running Storybook
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run storybook
+```
 
-## Deploy on Vercel
+Opens at [http://localhost:6006](http://localhost:6006).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Stories cover every meaningful UI state: loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session, and error. Each stateful story has a `play()` interaction test.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Triggering chaos scenarios
+
+The mock HCM has injectable failure modes for manual testing. While the dev server is running:
+
+```bash
+# Slow HCM — see the pending state for 4 seconds
+curl -X POST http://localhost:3000/api/hcm/_sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "slow"}'
+
+# HCM conflict — next request submission returns 409, triggers rollback
+curl -X POST http://localhost:3000/api/hcm/_sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "conflict"}'
+
+# Silent failure — 200 response but balance unchanged, caught on reconciliation
+curl -X POST http://localhost:3000/api/hcm/_sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "silent_fail"}'
+
+# Anniversary bonus — adds 5 days to annual leave mid-session, triggers StaleBanner
+curl -X POST http://localhost:3000/api/hcm/_sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "anniversary", "employeeId": "emp_1"}'
+
+# Reset HCM state to baseline
+curl -X POST http://localhost:3000/api/hcm/_sim \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "reset"}'
+```
+
+## Project structure
+
+```
+src/
+  app/
+    employee/         # Employee view (balances + request form)
+    manager/          # Manager view (approval queue)
+    api/hcm/          # Mock HCM endpoints
+  components/
+    balance/          # BalanceGrid, BalanceCell, StaleBanner
+    request/          # RequestForm, RollbackNotice
+    manager/          # ApprovalQueue, ApprovalCard
+    ui/               # shadcn primitives (owned source)
+  hooks/              # useBalances, useBalance, useTimeOffRequest, useRequests, useReconcile
+  lib/
+    hcm/              # Mock HCM client, fixtures, in-memory sim state
+    store/            # Zustand UI store (form step machine, banner state)
+  types/              # Shared TypeScript types
+  mocks/              # MSW handlers for Storybook and tests
+tests/
+  unit/               # Pure function tests (error classification, cache keys)
+  hooks/              # Hook behaviour under mock network (MSW)
+  integration/        # Full request lifecycle tests
+.claude/
+  rules/              # Path-scoped coding rules (components, hooks, api, stories, tests)
+  commands/           # Custom slash commands (/seed-hcm, /add-story, /hcm-scenario)
+  settings.json       # Hooks (lint on save, typecheck reminder)
+  architecture.md     # Architecture overview (imported by CLAUDE.md)
+```
+
+## Technical decisions
+
+See [TRD.md](./TRD.md) for the full Technical Requirements Document — covers optimistic update strategy, cache invalidation, background refresh conflict resolution, component tree design, test strategy, and alternatives considered.

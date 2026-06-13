@@ -82,8 +82,11 @@ export const scenarios = {
   ],
 
   stale: [
-    http.get("/api/hcm/balances", () => {
-      const staleBalances: Balance[] = SEED_BALANCES.map((b) => ({
+    http.get("/api/hcm/balances", ({ request }) => {
+      const employeeId = new URL(request.url).searchParams.get("employeeId");
+      const staleBalances: Balance[] = SEED_BALANCES.filter(
+        (b) => !employeeId || b.employeeId === employeeId
+      ).map((b) => ({
         ...b,
         fetchedAt: new Date(Date.now() - 120_000).toISOString(),
       }));
@@ -137,8 +140,11 @@ export const scenarios = {
   ],
 
   anniversaryBonus: [
-    http.get("/api/hcm/balances", () => {
-      const boosted: Balance[] = SEED_BALANCES.map((b) =>
+    http.get("/api/hcm/balances", ({ request }) => {
+      const employeeId = new URL(request.url).searchParams.get("employeeId");
+      const boosted: Balance[] = SEED_BALANCES.filter(
+        (b) => !employeeId || b.employeeId === employeeId
+      ).map((b) =>
         b.leaveType === "annual" ? { ...b, available: b.available + 5 } : b
       );
       return HttpResponse.json({ balances: boosted });

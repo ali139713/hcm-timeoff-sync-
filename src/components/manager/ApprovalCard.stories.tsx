@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { userEvent, within, expect, waitFor } from "@storybook/test";
+import { userEvent, within, expect } from "@storybook/test";
 import { ApprovalCard } from "./ApprovalCard";
-import { baseHandlers, scenarios } from "@/mocks/handlers";
+import { baseHandlers } from "@/mocks/handlers";
 import type { TimeOffRequest } from "@/types";
 
 const PENDING_REQUEST: TimeOffRequest = {
@@ -40,34 +40,16 @@ export const LiveBalanceCheck: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /check balance/i }));
-    await waitFor(() =>
-      expect(canvas.getByText(/available/i)).toBeInTheDocument()
-    );
-    await expect(canvas.getByText("15")).toBeInTheDocument();
+    // emp_1 / loc_nyc / annual seed balance is 15 days available
+    await expect(await canvas.findByText(/15 days/i)).toBeInTheDocument();
+    await expect(canvas.getByText(/available/i)).toBeInTheDocument();
   },
 };
 
-export const ApproveFlow: Story = {
-  name: "Approve — optimistic update then invalidation",
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /approve/i }));
-    await waitFor(() =>
-      expect(canvas.getByText(/Approved/i)).toBeInTheDocument()
-    );
-  },
-};
-
-export const DenyFlow: Story = {
-  name: "Deny — request marked denied, balance restored in HCM",
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /deny/i }));
-    await waitFor(() =>
-      expect(canvas.getByText(/Denied/i)).toBeInTheDocument()
-    );
-  },
-};
+// Note: the approve/deny optimistic flow + rollback is verified in
+// ApprovalQueue.stories.tsx, where the card is driven by the requests query
+// cache. ApprovalCard is presentational (status comes from props), so an
+// optimistic cache update would not be reflected here in isolation.
 
 export const Approved: Story = {
   name: "Already approved — card dimmed, no action buttons",
@@ -85,21 +67,6 @@ export const Denied: Story = {
   name: "Already denied",
   args: {
     request: { ...PENDING_REQUEST, status: "denied", resolvedAt: new Date().toISOString() },
-  },
-};
-
-export const ApproveError: Story = {
-  name: "HCM error on approve — optimistic rollback",
-  parameters: {
-    msw: { handlers: [...baseHandlers, ...scenarios.approveError] },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /approve/i }));
-    // After rollback, request reverts to pending
-    await waitFor(() =>
-      expect(canvas.getByText(/Pending/i)).toBeInTheDocument()
-    );
   },
 };
 

@@ -90,7 +90,7 @@ export const HCMError: Story = {
 export const OptimisticPending: Story = {
   name: "Optimistic pending — request submitted, awaiting HCM",
   parameters: {
-    msw: { handlers: scenarios.hcmSlow },
+    msw: { handlers: [...baseHandlers, ...scenarios.hcmSlow] },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

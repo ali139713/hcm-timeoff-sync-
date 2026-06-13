@@ -15,6 +15,13 @@ const meta: Meta<typeof RequestForm> = {
 export default meta;
 type Story = StoryObj<typeof RequestForm>;
 
+// The Dialog renders its content through a portal to document.body, which lives
+// outside `canvasElement`. Scope all in-dialog queries to the document body.
+function openDialog(canvasElement: HTMLElement) {
+  const body = canvasElement.ownerDocument.body;
+  return { body, screen: within(body) };
+}
+
 export const Default: Story = {
   name: "Idle — button visible, modal closed",
 };
@@ -22,35 +29,35 @@ export const Default: Story = {
 export const ModalOpen: Story = {
   name: "Modal open — form ready",
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /request time off/i }));
-    await expect(canvas.getByText(/Submit request/i)).toBeInTheDocument();
-    await expect(canvas.getByText(/Available:/i)).toBeInTheDocument();
+    const { screen } = openDialog(canvasElement);
+    await userEvent.click(screen.getByRole("button", { name: /request time off/i }));
+    await expect(await screen.findByText(/Submit request/i)).toBeInTheDocument();
+    await expect(await screen.findByText(/Available:/i)).toBeInTheDocument();
   },
 };
 
 export const OptimisticPending: Story = {
   name: "Optimistic pending — slow HCM, spinner visible",
   parameters: {
-    msw: { handlers: [...baseHandlers, ...scenarios.hcmSlow] },
+    // override (slow POST) must precede baseHandlers — MSW uses first match
+    msw: { handlers: [...scenarios.hcmSlow, ...baseHandlers] },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /request time off/i }));
+    const { body, screen } = openDialog(canvasElement);
+    await userEvent.click(screen.getByRole("button", { name: /request time off/i }));
 
-    const daysInput = canvas.getByRole("spinbutton");
+    const daysInput = await screen.findByRole("spinbutton");
     await userEvent.clear(daysInput);
     await userEvent.type(daysInput, "2");
 
-    const startDate = canvasElement.querySelector('input[type="date"]') as HTMLInputElement;
-    await userEvent.type(startDate, "2025-09-01");
-    const endDate = canvasElement.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
-    await userEvent.type(endDate, "2025-09-02");
+    const dates = body.querySelectorAll('input[type="date"]');
+    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-02");
 
-    await userEvent.click(canvas.getByRole("button", { name: /Submit request/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
     await waitFor(() =>
-      expect(canvas.getByText(/Submitting/i)).toBeInTheDocument()
+      expect(screen.getByText(/Submitting/i)).toBeInTheDocument()
     );
   },
 };
@@ -58,30 +65,29 @@ export const OptimisticPending: Story = {
 export const HCMRejected: Story = {
   name: "HCM rejected — rollback notice with preserved draft",
   parameters: {
-    msw: { handlers: [...baseHandlers, ...scenarios.hcmConflict] },
+    msw: { handlers: [...scenarios.hcmConflict, ...baseHandlers] },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /request time off/i }));
+    const { body, screen } = openDialog(canvasElement);
+    await userEvent.click(screen.getByRole("button", { name: /request time off/i }));
 
-    const daysInput = canvas.getByRole("spinbutton");
+    const daysInput = await screen.findByRole("spinbutton");
     await userEvent.clear(daysInput);
     await userEvent.type(daysInput, "2");
 
-    const startDate = canvasElement.querySelector('input[type="date"]') as HTMLInputElement;
-    await userEvent.type(startDate, "2025-09-01");
-    const endDate = canvasElement.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
-    await userEvent.type(endDate, "2025-09-02");
+    const dates = body.querySelectorAll('input[type="date"]');
+    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-02");
 
-    await userEvent.click(canvas.getByRole("button", { name: /Submit request/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
     await waitFor(() =>
       expect(
-        canvas.getByText(/Request could not be submitted/i)
+        screen.getByText(/Request could not be submitted/i)
       ).toBeInTheDocument()
     );
-    await expect(canvas.getByText(/enough days/i)).toBeInTheDocument();
-    await expect(canvas.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    await expect(screen.getByText(/enough days/i)).toBeInTheDocument();
+    await expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
   },
 };
 
@@ -91,54 +97,52 @@ export const Confirmed: Story = {
     msw: { handlers: baseHandlers },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /request time off/i }));
+    const { body, screen } = openDialog(canvasElement);
+    await userEvent.click(screen.getByRole("button", { name: /request time off/i }));
 
-    const daysInput = canvas.getByRole("spinbutton");
+    const daysInput = await screen.findByRole("spinbutton");
     await userEvent.clear(daysInput);
     await userEvent.type(daysInput, "1");
 
-    const startDate = canvasElement.querySelector('input[type="date"]') as HTMLInputElement;
-    await userEvent.type(startDate, "2025-09-01");
-    const endDate = canvasElement.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
-    await userEvent.type(endDate, "2025-09-01");
+    const dates = body.querySelectorAll('input[type="date"]');
+    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-01");
 
-    await userEvent.click(canvas.getByRole("button", { name: /Submit request/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
     await waitFor(() =>
-      expect(canvas.getByText(/Request submitted/i)).toBeInTheDocument()
+      expect(screen.getByText(/Request submitted/i)).toBeInTheDocument()
     );
-    await expect(canvas.getByText(/pending HCM confirmation/i)).toBeInTheDocument();
+    await expect(screen.getByText(/pending HCM confirmation/i)).toBeInTheDocument();
   },
 };
 
 export const OptimisticRolledBack: Story = {
   name: "Optimistic rolled back — draft preserved for retry",
   parameters: {
-    msw: { handlers: [...baseHandlers, ...scenarios.hcmConflict] },
+    msw: { handlers: [...scenarios.hcmConflict, ...baseHandlers] },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /request time off/i }));
+    const { body, screen } = openDialog(canvasElement);
+    await userEvent.click(screen.getByRole("button", { name: /request time off/i }));
 
-    const daysInput = canvas.getByRole("spinbutton");
+    const daysInput = await screen.findByRole("spinbutton");
     await userEvent.clear(daysInput);
     await userEvent.type(daysInput, "5");
 
-    const startDate = canvasElement.querySelector('input[type="date"]') as HTMLInputElement;
-    await userEvent.type(startDate, "2025-10-01");
-    const endDate = canvasElement.querySelectorAll('input[type="date"]')[1] as HTMLInputElement;
-    await userEvent.type(endDate, "2025-10-05");
+    const dates = body.querySelectorAll('input[type="date"]');
+    await userEvent.type(dates[0] as HTMLInputElement, "2025-10-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2025-10-05");
 
-    await userEvent.click(canvas.getByRole("button", { name: /Submit request/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
     await waitFor(() =>
-      expect(canvas.getByText(/Request could not be submitted/i)).toBeInTheDocument()
+      expect(screen.getByText(/Request could not be submitted/i)).toBeInTheDocument()
     );
 
     // Draft is still in the form fields
     await expect(
-      (canvas.getByRole("spinbutton") as HTMLInputElement).value
+      (screen.getByRole("spinbutton") as HTMLInputElement).value
     ).toBe("5");
   },
 };

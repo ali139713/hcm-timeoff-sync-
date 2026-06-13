@@ -38,6 +38,8 @@ export function useResolveRequest() {
         keys.allRequests
       );
 
+      const resolvedRequest = snapshot?.requests.find((r) => r.id === requestId);
+
       queryClient.setQueryData<{ requests: TimeOffRequest[] }>(
         keys.allRequests,
         (old) => {
@@ -56,7 +58,7 @@ export function useResolveRequest() {
         }
       );
 
-      return { snapshot };
+      return { snapshot, employeeId: resolvedRequest?.employeeId };
     },
 
     onError: (_err, _vars, context) => {
@@ -65,8 +67,13 @@ export function useResolveRequest() {
       }
     },
 
-    onSettled: () => {
+    onSettled: (_data, _err, _vars, context) => {
       queryClient.invalidateQueries({ queryKey: keys.allRequests });
+      if (context?.employeeId) {
+        queryClient.invalidateQueries({
+          queryKey: keys.balances(context.employeeId),
+        });
+      }
     },
   });
 

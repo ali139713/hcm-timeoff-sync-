@@ -38,9 +38,10 @@ export const InsufficientBalance: Story = {
   name: "Insufficient balance — reason shown, draft hint visible",
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/Request could not be submitted/i)).toBeInTheDocument();
-    await expect(canvas.getByText(/enough days/i)).toBeInTheDocument();
-    await expect(canvas.getByText(/details have been preserved/i)).toBeInTheDocument();
+    // findByText (async) — waits for the WithRollbackState useEffect to flush
+    await expect(await canvas.findByText(/Request could not be submitted/i)).toBeInTheDocument();
+    await expect(await canvas.findByText(/enough days/i)).toBeInTheDocument();
+    await expect(await canvas.findByText(/details have been preserved/i)).toBeInTheDocument();
   },
 };
 

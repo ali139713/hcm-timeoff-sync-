@@ -45,7 +45,7 @@ Opens at [http://localhost:6006](http://localhost:6006).
 
 Stories cover every meaningful UI state: loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session, and error. Each stateful story has a `play()` interaction test.
 
-**Hosted Storybook (Chromatic):** https://6a2d32a77798ce20165521fd-ozvocewcuu.chromatic.com/
+**Hosted Storybook (Chromatic):** https://6a2d32a77798ce20165521fd-cpnqeoawte.chromatic.com/
 
 ## Triggering chaos scenarios
 

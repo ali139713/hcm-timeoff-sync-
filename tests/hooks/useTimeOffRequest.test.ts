@@ -49,7 +49,6 @@ describe("useTimeOffRequest — optimistic update", () => {
     expect(annual?.available).toBe(12); // 15 - 3
     expect(annual?.pending).toBe(3);
 
-    // Wait for completion
     await waitFor(() => expect(result.current.isPending).toBe(false));
   });
 
@@ -141,7 +140,6 @@ describe("useTimeOffRequest — silent failure detection", () => {
       const annual = cached?.balances.find(
         (b) => b.locationId === "loc_nyc" && b.leaveType === "annual"
       );
-      // HCM returned original (15) — cache now reflects the authoritative value
       expect(annual?.available).toBe(15);
     });
   });

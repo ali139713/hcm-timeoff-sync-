@@ -60,8 +60,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (mode === "silent_fail") {
-    // 200 but nothing recorded and no deduction — the frontend's onSettled
-    // per-cell read will see the unchanged balance and reconcile
+    // 200 but nothing recorded — clients must catch this on reconcile
     return NextResponse.json({ request: newRequest });
   }
 

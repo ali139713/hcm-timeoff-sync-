@@ -42,12 +42,9 @@ function BalanceGridInner({ employeeId }: Props) {
   const isMutating = useIsMutating();
   const { submissionStep, dismissStaleBanner } = useUIStore();
 
-  // Detect balances changed by something other than this session's mutations
-  // (anniversary bonus, year reset, manager adjustment). `acknowledged` is the
-  // last snapshot the user has seen; comparing it against fresh data during
-  // render is the React "adjust state when props change" pattern. While a
-  // mutation is in-flight the baseline is reset, so the user's own optimistic
-  // deduction is adopted as the new baseline instead of flagged as external.
+  // `acknowledged` = last snapshot the user has seen. Resetting it during a
+  // mutation means our own optimistic deduction becomes the new baseline,
+  // so only external changes (anniversary bonus etc.) trigger a banner.
   const [acknowledged, setAcknowledged] = useState<Balance[] | null>(null);
 
   if (isMutating > 0) {

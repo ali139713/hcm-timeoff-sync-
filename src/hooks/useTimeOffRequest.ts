@@ -35,8 +35,7 @@ export function useTimeOffRequest() {
     onMutate: async (payload: SubmitPayload) => {
       setSubmissionStep("submitting");
 
-      // Cancel any in-flight background refetches for this employee's balances
-      // so they don't overwrite the optimistic update mid-flight
+      // a background refetch resolving mid-flight would overwrite the optimistic update
       await queryClient.cancelQueries({
         queryKey: keys.balances(payload.employeeId),
       });
@@ -45,7 +44,6 @@ export function useTimeOffRequest() {
         keys.balances(payload.employeeId)
       );
 
-      // Optimistically deduct — show as tentative (pending), not approved
       queryClient.setQueryData<CacheSnapshot>(
         keys.balances(payload.employeeId),
         (old) => {
@@ -74,7 +72,6 @@ export function useTimeOffRequest() {
       _vars: SubmitPayload,
       context: { snapshot: CacheSnapshot | undefined; payload: SubmitPayload } | undefined
     ) => {
-      // Rollback the optimistic update — restore the snapshot
       if (context?.snapshot) {
         queryClient.setQueryData(
           keys.balances(context.payload.employeeId),
@@ -101,15 +98,13 @@ export function useTimeOffRequest() {
       _error: unknown,
       vars: SubmitPayload
     ) => {
-      // Always fetch the authoritative balance after mutation settles.
-      // This catches silent failures: HCM returned 200 but didn't actually deduct.
+      // re-read the cell from HCM — a 200 doesn't guarantee the deduction happened
       const fresh = await fetchBalanceOnDemand(
         vars.employeeId,
         vars.locationId,
         vars.leaveType
       );
 
-      // Update the batch cache with the authoritative value for this cell
       if (fresh) {
         queryClient.setQueryData<CacheSnapshot>(
           keys.balances(vars.employeeId),
@@ -127,7 +122,6 @@ export function useTimeOffRequest() {
         );
       }
 
-      // Invalidate the full batch so background renders stay fresh
       queryClient.invalidateQueries({
         queryKey: keys.balances(vars.employeeId),
       });

@@ -126,7 +126,6 @@ export const scenarios = {
       const employeeId = url.searchParams.get("employeeId");
       const locationId = url.searchParams.get("locationId");
       const leaveType = url.searchParams.get("leaveType");
-      // Return original balance — no deduction happened
       const balance = SEED_BALANCES.find(
         (b) =>
           b.employeeId === employeeId &&

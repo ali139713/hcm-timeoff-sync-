@@ -7,8 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { makeQueryClient } from "@/lib/query-client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // One QueryClient per browser session — not a module-level singleton
-  // so SSR never shares state between requests
+  // per-session client — a module singleton would share cache across SSR requests
   const [queryClient] = useState(() => makeQueryClient());
 
   return (

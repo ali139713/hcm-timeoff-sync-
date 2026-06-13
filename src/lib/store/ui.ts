@@ -18,17 +18,15 @@ interface RequestDraft {
 }
 
 interface UIState {
-  // Request form
   requestModalOpen: boolean;
   submissionStep: SubmissionStep;
   confirmedRequest: TimeOffRequest | null;
   rollbackReason: string | null;
   savedDraft: RequestDraft | null;
 
-  // Stale banners — keyed by "employeeId:locationId:leaveType"
+  // keyed by "employeeId:locationId:leaveType"
   dismissedStaleBanners: Set<string>;
 
-  // Actions
   openRequestModal: () => void;
   closeRequestModal: () => void;
   setSubmissionStep: (step: SubmissionStep) => void;

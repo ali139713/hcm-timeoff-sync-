@@ -51,7 +51,6 @@ describe("request lifecycle — happy path", () => {
 
     act(() => { result.current.submit(SUBMIT_PAYLOAD); });
 
-    // While in-flight: optimistic deduction visible
     await waitFor(() => expect(result.current.isPending).toBe(true));
     const optimistic = client.getQueryData<{ balances: typeof SEED_BALANCES }>(keys.balances("emp_1"));
     const optimisticAnnual = optimistic?.balances.find(

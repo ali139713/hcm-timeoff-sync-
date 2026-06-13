@@ -5,8 +5,8 @@ import { render, type RenderOptions } from "@testing-library/react";
 export function makeTestQueryClient() {
   return new QueryClient({
     defaultOptions: {
-      // gcTime: Infinity prevents cache entries from being GCed between assertions
-      // when there's no active subscriber (common in mutation hook tests)
+      // gcTime Infinity: mutation hook tests have no active subscriber,
+      // so entries would otherwise be GCed between assertions
       queries: { retry: false, staleTime: 0, gcTime: Infinity },
       mutations: { retry: false },
     },

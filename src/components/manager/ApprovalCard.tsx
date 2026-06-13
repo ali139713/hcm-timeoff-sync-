@@ -23,8 +23,7 @@ const STATUS_BADGE: Record<string, { label: string; variant: "default" | "second
 };
 
 export function ApprovalCard({ request }: Props) {
-  // Fetch the live balance at decision time so the manager sees the true
-  // remaining balance, not a potentially stale cached value
+  // live read at decision time — the cached batch value may be minutes old
   const [showLiveBalance, setShowLiveBalance] = useState(false);
   const { balance, isLoading: balanceLoading, refetch } = useBalance(
     request.employeeId,
@@ -57,7 +56,6 @@ export function ApprovalCard({ request }: Props) {
           <p className="text-sm text-gray-600 italic">&ldquo;{request.note}&rdquo;</p>
         )}
 
-        {/* Live balance check — managers should approve on fresh data, not cache */}
         <div className="rounded-md border border-gray-100 bg-gray-50 p-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-gray-600">

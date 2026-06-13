@@ -12,8 +12,8 @@ interface UseBalanceResult {
   refetch: () => void;
 }
 
-// Per-cell real-time read — staleTime: 0 because this is the authoritative single source.
-// Only fetch on demand (after mutations or at manager approval time), never on mount.
+// staleTime 0 + disabled by default: this is the authoritative read,
+// fetched on demand only (post-mutation, manager approval), never polled
 export function useBalance(
   employeeId: string,
   locationId: string,
@@ -30,8 +30,6 @@ export function useBalance(
   return { balance: data, isLoading, isError, refetch };
 }
 
-// Utility for imperatively fetching a single balance after a mutation settles.
-// Returns the freshest HCM value for reconciliation comparison.
 export function useFetchBalanceOnDemand() {
   const queryClient = useQueryClient();
 

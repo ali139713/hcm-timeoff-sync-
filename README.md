@@ -28,10 +28,10 @@ The landing page has links for two employee views (Sarah Chen, James Okafor) and
 ## Running tests
 
 ```bash
-# Unit + hook + integration tests (27 tests)
+# Unit + hook + integration tests only (27 tests, no browser required)
 npx vitest run --project unit
 
-# All tests including Storybook interaction tests
+# Full suite including Storybook interaction tests in Chromium (57 tests)
 npm test
 ```
 
@@ -44,6 +44,8 @@ npm run storybook
 Opens at [http://localhost:6006](http://localhost:6006).
 
 Stories cover every meaningful UI state: loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session, and error. Each stateful story has a `play()` interaction test.
+
+**Hosted Storybook (Chromatic):** https://6a2d32a77798ce20165521fd-ozvocewcuu.chromatic.com/
 
 ## Triggering chaos scenarios
 

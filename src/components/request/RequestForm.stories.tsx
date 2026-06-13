@@ -51,8 +51,8 @@ export const OptimisticPending: Story = {
     await userEvent.type(daysInput, "2");
 
     const dates = body.querySelectorAll('input[type="date"]');
-    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
-    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-02");
+    await userEvent.type(dates[0] as HTMLInputElement, "2027-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2027-09-02");
 
     await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
@@ -76,8 +76,8 @@ export const HCMRejected: Story = {
     await userEvent.type(daysInput, "2");
 
     const dates = body.querySelectorAll('input[type="date"]');
-    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
-    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-02");
+    await userEvent.type(dates[0] as HTMLInputElement, "2027-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2027-09-02");
 
     await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
@@ -105,8 +105,8 @@ export const Confirmed: Story = {
     await userEvent.type(daysInput, "1");
 
     const dates = body.querySelectorAll('input[type="date"]');
-    await userEvent.type(dates[0] as HTMLInputElement, "2025-09-01");
-    await userEvent.type(dates[1] as HTMLInputElement, "2025-09-01");
+    await userEvent.type(dates[0] as HTMLInputElement, "2027-09-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2027-09-01");
 
     await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 
@@ -131,8 +131,8 @@ export const OptimisticRolledBack: Story = {
     await userEvent.type(daysInput, "5");
 
     const dates = body.querySelectorAll('input[type="date"]');
-    await userEvent.type(dates[0] as HTMLInputElement, "2025-10-01");
-    await userEvent.type(dates[1] as HTMLInputElement, "2025-10-05");
+    await userEvent.type(dates[0] as HTMLInputElement, "2027-10-01");
+    await userEvent.type(dates[1] as HTMLInputElement, "2027-10-05");
 
     await userEvent.click(screen.getByRole("button", { name: /Submit request/i }));
 

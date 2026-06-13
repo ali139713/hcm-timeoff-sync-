@@ -26,12 +26,17 @@ import { useBalances } from "@/hooks/useBalances";
 import { EMPLOYEES, LOCATIONS } from "@/lib/hcm/fixtures";
 import type { LeaveType } from "@/types";
 
+const today = new Date().toISOString().split("T")[0];
+
 const schema = z
   .object({
     locationId: z.string().min(1, "Select a location"),
     leaveType: z.enum(["annual", "sick", "personal"]),
     days: z.coerce.number().int().min(1, "At least 1 day").max(365),
-    startDate: z.string().min(1, "Required"),
+    startDate: z.string().min(1, "Required").refine(
+      (d) => d >= today,
+      "Start date cannot be in the past"
+    ),
     endDate: z.string().min(1, "Required"),
     note: z.string().max(500).optional(),
   })
@@ -87,6 +92,7 @@ export function RequestForm({ employeeId }: Props) {
 
   const watchedLocation = useWatch({ control, name: "locationId" }) ?? "";
   const watchedLeaveType = useWatch({ control, name: "leaveType" });
+  const watchedStartDate = useWatch({ control, name: "startDate" });
 
   const relevantBalance = balances.find(
     (b) =>
@@ -214,6 +220,7 @@ export function RequestForm({ employeeId }: Props) {
                   <label className="text-sm font-medium">Start date</label>
                   <input
                     type="date"
+                    min={today}
                     {...register("startDate")}
                     className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />
@@ -225,6 +232,7 @@ export function RequestForm({ employeeId }: Props) {
                   <label className="text-sm font-medium">End date</label>
                   <input
                     type="date"
+                    min={watchedStartDate || today}
                     {...register("endDate")}
                     className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                   />

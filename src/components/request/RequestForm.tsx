@@ -159,7 +159,11 @@ export function RequestForm({ employeeId }: Props) {
                   onValueChange={(v: string | null) => setValue("locationId", v ?? "")}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
+                    <SelectValue placeholder="Select location">
+                      {watchedLocation
+                        ? (LOCATIONS.find((l) => l.id === watchedLocation)?.name ?? watchedLocation)
+                        : undefined}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {(employee?.locationIds ?? []).map((id) => {
@@ -206,7 +210,7 @@ export function RequestForm({ employeeId }: Props) {
                 <input
                   type="number"
                   min={1}
-                  max={relevantBalance?.available ?? 365}
+                  max={relevantBalance && relevantBalance.available > 0 ? relevantBalance.available : undefined}
                   {...register("days")}
                   className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />

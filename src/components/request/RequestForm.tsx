@@ -60,6 +60,7 @@ export function RequestForm({ employeeId }: Props) {
     control,
     setValue,
     reset,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -93,6 +94,13 @@ export function RequestForm({ employeeId }: Props) {
   );
 
   function onSubmit(values: FormValues) {
+    if (relevantBalance && values.days > relevantBalance.available) {
+      setError("days", {
+        type: "manual",
+        message: `Only ${relevantBalance.available} day${relevantBalance.available === 1 ? "" : "s"} available`,
+      });
+      return;
+    }
     submit({
       employeeId,
       locationId: values.locationId,
@@ -192,6 +200,7 @@ export function RequestForm({ employeeId }: Props) {
                 <input
                   type="number"
                   min={1}
+                  max={relevantBalance?.available ?? 365}
                   {...register("days")}
                   className="flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
